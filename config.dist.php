@@ -18,6 +18,10 @@ $excludedPaths = [
 ];
 
 
+// Maximum depth to crawl into
+$maxDepth = 5;
+
+
 // Define meta keys to exclude
 $excludedMetaKeys = ['viewport', 'twitter:card', 'generator'];
 

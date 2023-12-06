@@ -30,8 +30,6 @@ crawlURL($startingURL);
 
 
 
-
-
 // After crawling, create the destination directory
 $files = setDestFiles($startingURL);
 createDestFolder($files['csvResults']);
@@ -88,15 +86,21 @@ fclose($csvFileExternal);
 function crawlURL($url) {
     global $startingURL, $crawledURLs, $internalURLs, $excludedPaths,
 			$excludedMetaKeys, $allMetaInfo,
-			$debugCounter, $debugLimit;
+			$debugCounter, $debugLimit, $maxDepth;
 
 
 	// Remove trailing slash
-	$url = rtrim($url, '/');
+	$url = html_entity_decode(rtrim($url, '/'));
 
 	// If the debug counter reaches the limit, return
 	if ($debugCounter >= $debugLimit) {
-        // echo "Debug limit reached, stopping.\n";
+        message("Debug limit reached, stopping.");
+        return;
+    }
+
+
+    if (getUrlDepth($url) > $maxDepth) {
+        message("URL depth > $maxDepth");
         return;
     }
 
@@ -107,7 +111,7 @@ function crawlURL($url) {
     // Add the URL to the crawled URLs array
     $crawledURLs[] = $url;
 
-    message("Crawling URL: ".$url, 'progress');
+    message("Crawling URL: " . $url , 'progress');
 
     // Get the page content
 	$pageContent = getContents($url);
@@ -128,7 +132,8 @@ function crawlURL($url) {
 
 
     // Extract internal URLs from the page content
-    preg_match_all('/href="([^"]+)"/', $pageContent, $matches);
+    // preg_match_all('/href="([^"]+)"/', $pageContent, $matches);
+    preg_match_all('/<a[^>]+href="([^"]+)">/i', $pageContent, $matches);
     $localURLs = findUrls($matches[1]);
 
     // Crawl the extracted internal URLs
@@ -183,6 +188,7 @@ function getContents($url) {
 
         if ($headers == 404) {
             $notFoundURLs[] = $url; // Log the 404 URL
+            return null;
         }
 
         // Close the cURL session
@@ -301,6 +307,26 @@ function findUrls($hrefs) {
 
     return $localURLs;
 }
+
+
+
+function getUrlDepth($internalURL) {
+    global $startingURL;
+
+    // Parse the URLs to extract the paths
+    $internalPath = parse_url($internalURL, PHP_URL_PATH);
+    $startingPath = parse_url($startingURL, PHP_URL_PATH);
+
+    // Split the paths into segments
+    $internalSegments = explode('/', trim($internalPath, '/'));
+    $startingSegments = explode('/', trim($startingPath, '/'));
+
+    // Calculate the depth difference
+    $depth = count($internalSegments) - count($startingSegments);
+
+    return $depth;
+}
+
 
 
 
