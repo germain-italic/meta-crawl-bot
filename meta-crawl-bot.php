@@ -57,7 +57,7 @@ fputcsv($csvFile, $headers);
 foreach ($allMetaInfo as $info) {
     $row = ['url' => $info['url']];
     foreach ($metaKeys as $key) {
-        $row['meta_' . $key] = html_entity_decode($info['meta'][$key]) ?? '';
+        $row['meta_' . $key] = $info['meta'][$key] ?? '';
     }
     $row['title'] = $info['title'];
     fputcsv($csvFile, $row);
