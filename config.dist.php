@@ -1,7 +1,7 @@
 <?php
 
 // Set the starting URL (without trailing slash)
-$startingURL = 'https://en.wikipedia.org/wiki/Web_crawler';
+$startingURL = 'https://www.italic.fr';
 
 // Define the path exclusion list
 $excludedPaths = [
@@ -16,6 +16,7 @@ $excludedPaths = [
 	'/feed',
 	'/comments/feed',
 ];
+
 
 
 // Exclude URLs with ?xxx=yyy
