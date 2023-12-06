@@ -5,9 +5,11 @@ include('config.php');
 
 // Check if a command-line argument is provided
 if (isset($argv[1])) {
-    $startingURL = $argv[1]; // Use the provided URL
+    // Format and use the provided URL
+    $startingURL = formatUrl($argv[1]);
 } else {
     // Fallback to the URL from config.php
+    $startingURL = formatUrl($startingURL);
 }
 
 $files = createFiles($startingURL);
@@ -342,4 +344,14 @@ function createFiles($startingURL) {
     $files['csvExternals']    = $dateFolder . '/external_urls.csv';
 
     return $files;
+}
+
+
+
+// Function to format a domain name into a well-formed URL
+function formatUrl($input) {
+    if (!preg_match('~^https?://~', $input)) {
+        return 'http://' . $input;
+    }
+    return $input;
 }
