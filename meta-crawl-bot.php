@@ -47,19 +47,6 @@ function crawlURL($url) {
         return;
     }
 
-
-	// Excluse external URLs
-	if (!strstr($url, $startingURL)) {
-		return;
-	}
-
-
-    // Check if the URL has already been crawled
-    if (in_array($url, $crawledURLs)) {
-        return;
-    }
-
-
 	// Increment the debug counter
     $debugCounter++;
 
@@ -90,26 +77,52 @@ function crawlURL($url) {
     // Extract internal URLs from the page content
     $internalURLs = [];
     preg_match_all('/href="([^"]+)"/', $pageContent, $matches);
+    $internalURLs = findUrls($matches[1]);
     foreach ($matches[1] as $href) {
-        $isExcluded = false;
+        
 
+        /*
         // Normalize the href to an absolute URL
         $fullUrl = strpos($href, 'http') === 0 ? $href : rtrim($startingURL, '/') . '/' . ltrim($href, '/');
+
+        // Skip invalid URLs (like 'javascript:;')
+        if (preg_match('/javascript:;/', $fullUrl)) {
+            continue;
+        }
+
 
         // Check against each excluded path
         foreach ($excludedPaths as $exPath) {
             if (strstr($fullUrl, $exPath)) {
                 $isExcluded = true;
-                message("        => Exclude $exPath");
-                break;
+                // message("        => Exclude $exPath");
+                continue;
             }
         }
 
-        // If not excluded and not already crawled, add to internal URLs
-        if (!$isExcluded && !in_array($fullUrl, $crawledURLs)) {
+
+        // Exclude external URLs
+        if (!strstr($fullUrl, $startingURL)) {
+            $isExcluded = true;
+            // message("        => Exclude $exPath");
+            continue;
+        }
+
+
+        // Check if the URL has already been crawled
+        if (in_array($fullUrl, $crawledURLs)) {
+            $isExcluded = true;
+            // message("        => Exclude $exPath");
+            continue;
+        }
+
+
+        // If not excluded add to internal URLs
+        if (!$isExcluded) {
             message("=> Adding $fullUrl to the list");
             $internalURLs[] = $fullUrl;
         }
+        */
     }
 
     // Crawl the extracted internal URLs
@@ -217,4 +230,41 @@ function message($msg) {
     echo $msg . "\n";
     ob_flush();
     flush();
+}
+
+
+function findUrls($hrefs) {
+    $isExcluded = false;
+    $internalURLs = [];
+
+    foreach($hrefs as $href) {
+        message("href: $href");
+        
+        if (!isInternalUrl($href)) {
+            message("  external");
+            break;
+        }
+    }
+
+    return $internalURLs = [];
+}
+
+
+
+function isInternalUrl($url) {
+    global $startingURL;
+    
+    // Extract the host from the starting URL
+    $startingDomain = parse_url($startingURL, PHP_URL_HOST);
+
+    // Normalize the URL if it's a relative URL
+    if (strpos($url, 'http') !== 0) {
+        $url = rtrim($startingURL, '/') . '/' . ltrim($url, '/');
+    }
+
+    // Extract the host from the input URL
+    $urlDomain = parse_url($url, PHP_URL_HOST);
+
+    // Compare domain names, ignoring HTTP and HTTPS
+    return strtolower($startingDomain) === strtolower($urlDomain);
 }
