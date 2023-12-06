@@ -1,22 +1,20 @@
 <?php
 
-/**
- * Rename this file config.php and replace with your values
- */
-
 // Set the starting URL (without trailing slash)
-$startingURL = '';
+$startingURL = 'https://www.wikipedia.org';
 
 // Define the path exclusion list
 $excludedPaths = [
-	'javascript:',
+	'/#',
+    'javascript:',
 	'/legal',
 	'/cookies',
-	'/wp-content/themes',
-	'/wp-json',
 	'/xmlrpc.php',
-	'/#',
+	'/wp-json',
 	'/wp-admin',
+	'/wp-content/themes',
+	'/feed',
+	'/comments/feed',
 ];
 
 
@@ -30,14 +28,5 @@ $debugLimit = 999;
 // Initialize a counter for debugging
 $debugCounter = 0;
 
-
-// Create a new directory inside 'results' with the current date and time
-$dateFolder = 'results/' . sanitizeUrlForFolderName($startingURL) . '-' . date('Y_m_d-H_i_s');
-if (!file_exists($dateFolder)) {
-    mkdir($dateFolder, 0777, true);
-}
-
-// Define file paths with the new directory
-$files['csvResults']  = $dateFolder . '/crawled_data.csv';
-$files['csv404']          = $dateFolder . '/404_urls.csv';
-$files['csvExternals']    = $dateFolder . '/external_urls.csv';
+// Common web assets extensions
+$assetExtensions = ['.css', '.js', '.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp', '.ico', '.bmp', '.tiff', '.woff', '.woff2', '.eot', '.ttf', '.otf', '.mp4', '.webm', '.mp3', '.wav', '.pdf', '.xml', '.json'];

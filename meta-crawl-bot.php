@@ -210,7 +210,7 @@ function message($msg) {
 
 
 function findUrls($hrefs) {
-    global $crawledURLs, $internalURLs, $externalURLs;
+    global $crawledURLs, $internalURLs, $externalURLs, $assetExtensions;
 
     $localURLs = [];
 
@@ -218,6 +218,13 @@ function findUrls($hrefs) {
         message("URL: $href");
 
         $url = normalizeUrl($href);
+
+        // Exclude assets
+        if (isAssetFile($url, $assetExtensions)) {
+            message("     Excluding asset file");
+            continue;
+        }
+
 
         // Exclude duplicates
         if (in_array($url, $crawledURLs) || in_array($url, $internalURLs)) {
@@ -256,6 +263,17 @@ function findUrls($hrefs) {
     }
 
     return $localURLs;
+}
+
+
+
+function isAssetFile($url, $assetExtensions) {
+    foreach ($assetExtensions as $extension) {
+        if (preg_match('/' . preg_quote($extension) . '$/', $url)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 
