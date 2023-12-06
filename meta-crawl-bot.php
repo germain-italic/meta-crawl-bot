@@ -240,13 +240,31 @@ function findUrls($hrefs) {
     foreach($hrefs as $href) {
         message("href: $href");
         
+        // Exclude external URLs
         if (!isInternalUrl($href)) {
-            message("  external");
-            break;
+            message("      Excluding external URL");
+            continue;
         }
+
+
+        // Exclude anchor links
+        if (isAnchorLink($href)) {
+            message("      Excluding anchor link");
+            continue;
+        }
+
+
     }
 
     return $internalURLs = [];
+}
+
+
+
+function isAnchorLink($url) {
+    // Parse the URL and return true if there's a fragment (portion after the #)
+    $parsedUrl = parse_url($url);
+    return isset($parsedUrl['fragment']) && !empty($parsedUrl['fragment']);
 }
 
 
