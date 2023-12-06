@@ -135,28 +135,38 @@ fclose($csvFileExternal);
 
 
 function getContents($url) {
-    global $notFoundURLs;
+    global $notFoundURLs, $startingURL;
 
-    $options = array(
-        'http' => array(
-            'method' => "GET",
-            'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36\r\n"
-        )
-    );
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false); // Don't follow redirects automatically
+    curl_setopt($ch, CURLOPT_HEADER, true);
+    curl_setopt($ch, CURLOPT_NOBODY, true);
+    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36');
 
-    $context = stream_context_create($options);
+    curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
-    $content = @file_get_contents($url, false, $context);
-
-    if (isset($http_response_header)) {
-        $responseCode = explode(' ', $http_response_header[0])[1];
-        if ($responseCode == '404') {
-            $notFoundURLs[] = $url; // Log the 404 URL
-        }
+    if ($httpCode == 301 || $httpCode == 302) {
+        $redirectUrl = curl_getinfo($ch, CURLINFO_REDIRECT_URL);
+        $startingURL = $redirectUrl; // Update the starting URL
+        curl_close($ch);
+        return getContents($redirectUrl); // Recursively call the function with the new URL
     }
 
-    return $content;
+    if ($httpCode == 404) {
+        $notFoundURLs[] = $url; // Log the 404 URL
+    }
+
+    // Close the cURL session
+    curl_close($ch);
+
+    // Return the content of the URL
+    return file_get_contents($url);
 }
+
+
 
 
 
