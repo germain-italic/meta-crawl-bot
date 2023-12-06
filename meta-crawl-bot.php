@@ -132,8 +132,7 @@ function crawlURL($url) {
 
 
     // Extract internal URLs from the page content
-    // preg_match_all('/href="([^"]+)"/', $pageContent, $matches);
-    preg_match_all('/<a[^>]+href="([^"]+)">/i', $pageContent, $matches);
+    preg_match_all('/<a[^>]*href="([^"]+)"/i', $pageContent, $matches);
     $localURLs = findUrls($matches[1]);
 
     // Crawl the extracted internal URLs
