@@ -25,9 +25,16 @@ $excludedMetaKeys = ['viewport', 'twitter:card', 'generator'];
 
 
 // Stop after n calls
-$debugLimit = 5;
+$debugLimit = 99999;
 
 
-// Name of the CSV files to create
-$csvFileName = 'results/crawled_data-'. date ('Y-m-d_H-i-s') . '.csv';
-$csvFileNotFoundName = '404s/404_urls-'. date ('Y-m-d_H-i-s') . '.csv';
+// Create a new directory inside 'results' with the current date and time
+$dateFolder = 'results/' . sanitizeUrlForFolderName($startingURL) . '-' . date('Y_m_d-H_i_s');
+if (!file_exists($dateFolder)) {
+    mkdir($dateFolder, 0777, true);
+}
+
+// Define file paths with the new directory
+$csvResultsFileName  = $dateFolder . '/crawled_data.csv';
+$csvFileNotFoundName = $dateFolder . '/404_urls.csv';
+$csvFileExternalName = $dateFolder . '/external_urls.csv';

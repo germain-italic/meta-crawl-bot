@@ -7,30 +7,22 @@ $debugCounter = 0;
 
 
 // Clear the CSV
-$csvFile = fopen($csvFileName, 'w');
+$csvFile = fopen($csvResultsFileName, 'w');
 
 
 // Start output buffering
 ob_start();
 
 
-// Initialize an empty array to store the crawled URLs
+// Initialize data store arrays
 $crawledURLs = [];
-
-
-// Initialize an empty array to store the URLs to crawl
 $internalURLs = [];
-
-
-// Initialize an array to store all meta information
 $allMetaInfo = [];
-
-
-// Initialize an array to store 404s
+$externalURLs = [];
 $notFoundURLs = [];
 
 
-// Crawl the starting URL
+// Start the crawler with the starting URL
 crawlURL($startingURL);
 
 
@@ -102,7 +94,7 @@ $headers = array_merge($headers, array_map(function($k) { return 'meta_' . $k; }
 $headers[] = 'title';
 
 // Write headers and data to CSV
-$csvFile = fopen($csvFileName, 'w');
+$csvFile = fopen($csvResultsFileName, 'w');
 fputcsv($csvFile, $headers);
 foreach ($allMetaInfo as $info) {
     $row = ['url' => $info['url']];
@@ -122,6 +114,15 @@ foreach ($notFoundURLs as $notFoundUrl) {
     fputcsv($csvFileNotFound, [$notFoundUrl]);
 }
 fclose($csvFileNotFound);
+
+
+// After finishing the crawl, save the external URLs to a CSV file
+$csvFileExternal = fopen($csvExternamUrlsName, 'w');
+foreach ($externalURLs as $externalUrl) {
+    fputcsv($csvFileExternal, [$externalUrl]);
+}
+fclose($csvFileExternal);
+
 
 
 
@@ -191,7 +192,7 @@ function message($msg) {
 
 
 function findUrls($hrefs) {
-    global $crawledURLs, $internalURLs;
+    global $crawledURLs, $internalURLs, $externalURLs;
 
     $localURLs = [];
 
@@ -210,6 +211,7 @@ function findUrls($hrefs) {
         // Exclude external URLs
         if (!isInternalUrl($url)) {
             message("     Excluding external URL");
+            $externalURLs[] = $url; // Log the external URL
             continue;
         }
 
@@ -299,4 +301,19 @@ function isInternalUrl($url) {
 
     // Compare domain names, ignoring HTTP and HTTPS
     return strtolower($startingDomain) === strtolower($urlDomain);
+}
+
+
+
+function sanitizeUrlForFolderName($url) {
+    // Remove the protocol (http, https)
+    $sanitized = preg_replace('#^https?://#', '', $url);
+
+    // Remove 'www.'
+    $sanitized = str_replace('www.', '', $sanitized);
+
+    // Replace any characters that are not letters, numbers, or hyphens with an underscore
+    $sanitized = preg_replace('/[^a-zA-Z0-9\-]/', '_', $sanitized);
+
+    return $sanitized;
 }

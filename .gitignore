@@ -1,3 +1,3 @@
 config.php
-404s/*.csv
-results/*.csv
+results/*
+!results/.gitkeep
