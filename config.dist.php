@@ -9,6 +9,7 @@ $startingURL = '';
 
 // Define the path exclusion list
 $excludedPaths = [
+	'javascript:',
 	'/legal',
 	'/cookies',
 	'/wp-content/themes',

@@ -18,6 +18,10 @@ ob_start();
 $crawledURLs = [];
 
 
+// Initialize an empty array to store the URLs to crawl
+$internalURLs = [];
+
+
 // Initialize an array to store all meta information
 $allMetaInfo = [];
 
@@ -33,7 +37,7 @@ crawlURL($startingURL);
 
 // Function to crawl a URL and extract meta and title information
 function crawlURL($url) {
-    global $startingURL, $crawledURLs, $excludedPaths,
+    global $startingURL, $crawledURLs, $internalURLs, $excludedPaths,
 			$excludedMetaKeys, $allMetaInfo,
 			$debugCounter, $debugLimit;
 
@@ -75,12 +79,11 @@ function crawlURL($url) {
 
 
     // Extract internal URLs from the page content
-    $internalURLs = [];
     preg_match_all('/href="([^"]+)"/', $pageContent, $matches);
-    $internalURLs = findUrls($matches[1]);
+    $localURLs = findUrls($matches[1]);
 
     // Crawl the extracted internal URLs
-    foreach ($internalURLs as $internalURL) {
+    foreach ($localURLs as $internalURL) {
         crawlURL($internalURL);
     }
 }
@@ -188,8 +191,9 @@ function message($msg) {
 
 
 function findUrls($hrefs) {
-    global $crawledURLs;
-    $internalURLs = [];
+    global $crawledURLs, $internalURLs;
+
+    $localURLs = [];
 
     foreach($hrefs as $href) {
         message("URL: $href");
@@ -225,12 +229,13 @@ function findUrls($hrefs) {
 
 
         // Add valid URL
+        $localURLs[] = $url;
         $internalURLs[] = $url;
 
 
     }
 
-    return $internalURLs = [];
+    return $localURLs;
 }
 
 
