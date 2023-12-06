@@ -22,6 +22,10 @@ $crawledURLs = [];
 $allMetaInfo = [];
 
 
+// Crawl the starting URL
+crawlURL($startingURL);
+
+
 
 // Function to crawl a URL and extract meta and title information
 function crawlURL($url) {
@@ -59,45 +63,16 @@ function crawlURL($url) {
     // Add the URL to the crawled URLs array
     $crawledURLs[] = $url;
 
-	echo "Crawling URL: " . $url . "\n";
-    ob_flush();
-    flush();
-
-	$options = array(
-	'http' => array(
-		'method' => "GET",
-		'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36\r\n"
-	)
-	);
-
-	$context = stream_context_create($options);
-
+    message("Crawling URL: ".$url);
 
     // Get the page content
-    $pageContent = file_get_contents($url, false, $context);
+	$pageContent = getContents($url);
 
     // Extract meta tags
-    $metaTags = [];
-	preg_match_all('/<meta (?:name|property)="([^"]+)" content="([^"]+)"/i', $pageContent, $matches);
-	for ($i = 0; $i < count($matches[1]); $i++) {
-		$metaTags[$matches[1][$i]] = $matches[2][$i];
-	}
-
-
-	// Filter out excluded meta tags
-    foreach ($excludedMetaKeys as $excludedKey) {
-        if (isset($metaTags[$excludedKey])) {
-            unset($metaTags[$excludedKey]);
-        }
-    }
-
+    $metaTags = extractMetaTags($pageContent);
 
     // Extract title tag
-    $titleTag = '';
-    preg_match('/<title>(.*?)<\/title>/i', $pageContent, $matches);
-    if (isset($matches[1])) {
-        $titleTag = $matches[1];
-    }
+    $titleTag = extractTitleTag($pageContent);
 
 
     // Add meta information for the current URL to the global array
@@ -124,24 +99,16 @@ function crawlURL($url) {
 		$fullUrl = strpos($href, 'http') === 0 ? $href : rtrim($url, '/') . '/' . ltrim($href, '/');
 		$relUrl  = str_replace($startingURL, '', $fullUrl,);
 
-		// echo "  relUrl: " . $relUrl. "\n";
-		// ob_flus();
-		// flush();
+		message("  relUrl: " . $relUrl);
+		message("  fullUrl: " . $fullUrl);
 
 		// Check against each excluded path
 		foreach ($excludedPaths as $exPath) {
-
-			// echo "    is $exPath in $relUrl ?\n";
-			// ob_flush();
-			// flush();
+			// message("    is $exPath in $relUr);
 
 			if (strstr($relUrl, $exPath)) {
 				$isExcluded = true;
-
-				// echo "        => Exclude $exPath\n";
-				// ob_flush();
-				// flush();
-
+				// message("        => Exclude $exP);
 				break;
 			}
 		}
@@ -159,8 +126,7 @@ function crawlURL($url) {
     }
 }
 
-// Crawl the starting URL
-crawlURL($startingURL);
+
 
 
 // After crawling, create headers based on collected meta information
@@ -185,3 +151,58 @@ foreach ($allMetaInfo as $info) {
     fputcsv($csvFile, $row);
 }
 fclose($csvFile);
+
+
+
+function getContents($url) {
+    $options = array(
+        'http' => array(
+            'method' => "GET",
+            'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36\r\n"
+        )
+        );
+
+    $context = stream_context_create($options);
+
+    return file_get_contents($url, false, $context);
+}
+
+
+
+function extractMetaTags($pageContent) {
+    global $excludedMetaKeys;
+
+    $metaTags = [];
+    preg_match_all('/<meta (?:name|property)="([^"]+)" content="([^"]+)"/i', $pageContent, $matches);
+    for( $i = 0; $i < count($matches[1]); $i++ ) {
+        $metaTags[$matches[1][$i]] = $matches[2][$i];
+    }
+
+    // Filter out excluded meta tags
+    foreach ($excludedMetaKeys as $excludedKey) {
+        if (isset($metaTags[$excludedKey])) {
+            unset($metaTags[$excludedKey]);
+        }
+    }
+
+    return $metaTags;
+}
+
+
+
+function extractTitleTag($pageContent) {
+    $titleTag = '';
+    preg_match('/<title>(.*?)<\/title>/i', $pageContent, $matches);
+    if (isset($matches[1])) {
+        $titleTag = $matches[1];
+    }
+    return $titleTag;
+}
+
+
+
+function message($msg) {
+    echo $msg . "\n";
+    ob_flush();
+    flush();
+}
