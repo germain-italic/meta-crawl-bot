@@ -79,25 +79,9 @@ function crawlURL($url) {
     preg_match_all('/href="([^"]+)"/', $pageContent, $matches);
     $internalURLs = findUrls($matches[1]);
     foreach ($matches[1] as $href) {
-        
+
 
         /*
-        // Check against each excluded path
-        foreach ($excludedPaths as $exPath) {
-            if (strstr($fullUrl, $exPath)) {
-                $isExcluded = true;
-                // message("        => Exclude $exPath");
-                continue;
-            }
-        }
-
-
-        // Exclude external URLs
-        if (!strstr($fullUrl, $startingURL)) {
-            $isExcluded = true;
-            // message("        => Exclude $exPath");
-            continue;
-        }
 
 
         // Check if the URL has already been crawled
@@ -228,25 +212,34 @@ function findUrls($hrefs) {
     $isExcluded = false;
     $internalURLs = [];
 
+    // Exclude duplicates
+    // if (isDuplicate($href)) {
+    //     message("      Excluding duplicate");
+    //     continue;
+    // }
+
+
     foreach($hrefs as $href) {
         message("href: $href");
-        
+
+        $url = normalizeUrl($href);
+
         // Exclude external URLs
-        if (!isInternalUrl($href)) {
+        if (!isInternalUrl($url)) {
             message("      Excluding external URL");
             continue;
         }
 
 
         // Exclude anchor links
-        if (isAnchorLink($href)) {
+        if (isAnchorLink($url)) {
             message("      Excluding anchor link");
             continue;
         }
 
-        
+
         // Exclude blacklisted path
-        if (isInBlacklistedPath($href)) {
+        if (isInBlacklistedPath($url)) {
             message("      Excluding blacklisted path");
             continue;
         }
@@ -256,6 +249,28 @@ function findUrls($hrefs) {
 
     return $internalURLs = [];
 }
+
+
+
+function normalizeUrl($href) {
+    global $startingURL;
+
+    // Check if the URL is already absolute
+    if (strpos($href, 'http') === 0) {
+        return $href;
+    }
+
+    // Extract the scheme and host from the starting URL
+    $scheme = parse_url($startingURL, PHP_URL_SCHEME);
+    $host = parse_url($startingURL, PHP_URL_HOST);
+
+    // Construct the base URL
+    $baseUrl = $scheme . '://' . $host;
+
+    // Normalize the URL
+    return rtrim($baseUrl, '/') . '/' . ltrim($href, '/');
+}
+
 
 
 
@@ -282,7 +297,7 @@ function isAnchorLink($url) {
 
 function isInternalUrl($url) {
     global $startingURL;
-    
+
     // Extract the host from the starting URL
     $startingDomain = parse_url($startingURL, PHP_URL_HOST);
 
