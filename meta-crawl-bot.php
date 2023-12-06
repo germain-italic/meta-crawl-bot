@@ -82,15 +82,6 @@ function crawlURL($url) {
         
 
         /*
-        // Normalize the href to an absolute URL
-        $fullUrl = strpos($href, 'http') === 0 ? $href : rtrim($startingURL, '/') . '/' . ltrim($href, '/');
-
-        // Skip invalid URLs (like 'javascript:;')
-        if (preg_match('/javascript:;/', $fullUrl)) {
-            continue;
-        }
-
-
         // Check against each excluded path
         foreach ($excludedPaths as $exPath) {
             if (strstr($fullUrl, $exPath)) {
@@ -253,11 +244,31 @@ function findUrls($hrefs) {
             continue;
         }
 
+        
+        // Exclude blacklisted path
+        if (isInBlacklistedPath($href)) {
+            message("      Excluding blacklisted path");
+            continue;
+        }
+
 
     }
 
     return $internalURLs = [];
 }
+
+
+
+function isInBlacklistedPath($url) {
+    global $excludedPaths;
+
+    foreach($excludedPaths as $exPath) {
+        if (strstr($url, $exPath)) {
+            return true;
+        }
+    }
+}
+
 
 
 
