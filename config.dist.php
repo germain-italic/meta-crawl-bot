@@ -21,6 +21,10 @@ $excludedPaths = [
 // Define meta keys to exclude
 $excludedMetaKeys = ['viewport', 'twitter:card', 'generator'];
 
+// Define file extensions to exclude
+$assetExtensions = ['.css', '.js', '.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp', '.ico', '.bmp', '.tiff', '.woff', '.woff2', '.eot', '.ttf', '.otf', '.mp4', '.webm', '.mp3', '.wav', '.pdf', '.xml', '.json'];
+
+
 
 // Stop after n calls
 $debugLimit = 999;
@@ -28,5 +32,6 @@ $debugLimit = 999;
 // Initialize a counter for debugging
 $debugCounter = 0;
 
-// Common web assets extensions
-$assetExtensions = ['.css', '.js', '.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp', '.ico', '.bmp', '.tiff', '.woff', '.woff2', '.eot', '.ttf', '.otf', '.mp4', '.webm', '.mp3', '.wav', '.pdf', '.xml', '.json'];
+// Log messages
+$showDebug = false;
+$showProgress = true;

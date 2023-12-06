@@ -107,7 +107,7 @@ function crawlURL($url) {
     // Add the URL to the crawled URLs array
     $crawledURLs[] = $url;
 
-    message("Crawling URL: ".$url);
+    message("Crawling URL: ".$url, 'progress');
 
     // Get the page content
 	$pageContent = getContents($url);
@@ -230,10 +230,18 @@ function extractTitleTag($pageContent) {
 
 
 
-function message($msg) {
-    echo $msg . "\n";
-    ob_flush();
-    flush();
+function message($msg, $level = 'debug') {
+    global $showDebug, $showProgress;
+
+    if (
+        ($showDebug && $level == 'debug')
+        ||
+        ($showProgress && $level == 'progress')
+    ) {
+        echo $msg . "\n";
+        ob_flush();
+        flush();
+    }
 }
 
 
