@@ -84,41 +84,29 @@ function crawlURL($url) {
 
 
     // Extract internal URLs from the page content
-	$internalURLs = [];
-	preg_match_all('/href="([^"]+)"/', $pageContent, $matches);
-	foreach ($matches[1] as $href) {
-		$isExcluded = false;
+    $internalURLs = [];
+    preg_match_all('/href="([^"]+)"/', $pageContent, $matches);
+    foreach ($matches[1] as $href) {
+        $isExcluded = false;
 
-		// Normalize the URL
-		$parsedUrl = parse_url($href);
-		$queryParams = [];
-		parse_str($parsedUrl['query'] ?? '', $queryParams);
+        // Normalize the href to an absolute URL
+        $fullUrl = strpos($href, 'http') === 0 ? $href : rtrim($startingURL, '/') . '/' . ltrim($href, '/');
 
+        // Check against each excluded path
+        foreach ($excludedPaths as $exPath) {
+            if (strstr($fullUrl, $exPath)) {
+                $isExcluded = true;
+                message("        => Exclude $exPath");
+                break;
+            }
+        }
 
-		// Normalize the href
-		$fullUrl = strpos($href, 'http') === 0 ? $href : rtrim($url, '/') . '/' . ltrim($href, '/');
-		$relUrl  = str_replace($startingURL, '', $fullUrl,);
-
-		message("  relUrl: " . $relUrl);
-		message("  fullUrl: " . $fullUrl);
-
-		// Check against each excluded path
-		foreach ($excludedPaths as $exPath) {
-			// message("    is $exPath in $relUr);
-
-			if (strstr($relUrl, $exPath)) {
-				$isExcluded = true;
-				// message("        => Exclude $exP);
-				break;
-			}
-		}
-
-		// If not excluded, add to internal URLs
-		if (!$isExcluded) {
-			$internalURLs[] = $fullUrl;
-		}
-	}
-
+        // If not excluded and not already crawled, add to internal URLs
+        if (!$isExcluded && !in_array($fullUrl, $crawledURLs)) {
+            message("=> Adding $fullUrl to the list");
+            $internalURLs[] = $fullUrl;
+        }
+    }
 
     // Crawl the extracted internal URLs
     foreach ($internalURLs as $internalURL) {
