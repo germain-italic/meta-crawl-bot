@@ -86,7 +86,7 @@ fclose($csvFileExternal);
 function crawlURL($url) {
     global $startingURL, $crawledURLs, $internalURLs, $excludedPaths,
 			$excludedMetaKeys, $allMetaInfo,
-			$debugCounter, $debugLimit, $maxDepth;
+			$debugCounter, $debugLimit;
 
 
 	// Remove trailing slash
@@ -98,11 +98,6 @@ function crawlURL($url) {
         return;
     }
 
-
-    if (getUrlDepth($url) > $maxDepth) {
-        message("URL depth > $maxDepth");
-        return;
-    }
 
 	// Increment the debug counter
     $debugCounter++;
@@ -313,26 +308,6 @@ function findUrls($hrefs) {
 
     return $localURLs;
 }
-
-
-
-function getUrlDepth($internalURL) {
-    global $startingURL;
-
-    // Parse the URLs to extract the paths
-    $internalPath = parse_url($internalURL, PHP_URL_PATH);
-    $startingPath = parse_url($startingURL, PHP_URL_PATH);
-
-    // Split the paths into segments
-    $internalSegments = explode('/', trim($internalPath, '/'));
-    $startingSegments = explode('/', trim($startingPath, '/'));
-
-    // Calculate the depth difference
-    $depth = count($internalSegments) - count($startingSegments);
-
-    return $depth;
-}
-
 
 
 

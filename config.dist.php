@@ -18,9 +18,6 @@ $excludedPaths = [
 ];
 
 
-// Maximum depth to crawl into
-$maxDepth = 5;
-
 // Exclude URLs with ?xxx=yyy
 $excludeQueryStringURLs = true;
 
