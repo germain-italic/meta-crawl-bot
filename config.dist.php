@@ -1,7 +1,7 @@
 <?php
 
 // Set the starting URL (without trailing slash)
-$startingURL = 'https://www.wikipedia.org';
+$startingURL = 'https://en.wikipedia.org/wiki/Web_crawler';
 
 // Define the path exclusion list
 $excludedPaths = [
@@ -20,6 +20,9 @@ $excludedPaths = [
 
 // Maximum depth to crawl into
 $maxDepth = 5;
+
+// Exclude URLs with ?xxx=yyy
+$excludeQueryStringURLs = true;
 
 
 // Define meta keys to exclude

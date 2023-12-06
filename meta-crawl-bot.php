@@ -90,7 +90,7 @@ function crawlURL($url) {
 
 
 	// Remove trailing slash
-	$url = html_entity_decode(rtrim($url, '/'));
+	$url = urldecode(html_entity_decode(rtrim($url, '/')));
 
 	// If the debug counter reaches the limit, return
 	if ($debugCounter >= $debugLimit) {
@@ -253,7 +253,7 @@ function message($msg, $level = 'debug') {
 
 
 function findUrls($hrefs) {
-    global $crawledURLs, $internalURLs, $externalURLs, $assetExtensions;
+    global $crawledURLs, $internalURLs, $externalURLs, $assetExtensions, $excludeQueryStringURLs;
 
     $localURLs = [];
 
@@ -294,6 +294,13 @@ function findUrls($hrefs) {
         // Exclude blacklisted path
         if (isInBlacklistedPath($url)) {
             message("     Excluding blacklisted path");
+            continue;
+        }
+
+
+        // Exclude URLs with GET parameters
+        if (strpos($url, '?') !== false && $excludeQueryStringURLs) {
+            message("     Excluding URL with GET parameter");
             continue;
         }
 
