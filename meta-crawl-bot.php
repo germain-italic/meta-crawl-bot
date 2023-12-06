@@ -209,40 +209,44 @@ function message($msg) {
 
 
 function findUrls($hrefs) {
-    $isExcluded = false;
+    global $crawledURLs;
     $internalURLs = [];
 
-    // Exclude duplicates
-    // if (isDuplicate($href)) {
-    //     message("      Excluding duplicate");
-    //     continue;
-    // }
-
-
     foreach($hrefs as $href) {
-        message("href: $href");
+        message("URL: $href");
 
         $url = normalizeUrl($href);
 
+        // Exclude duplicates
+        if (in_array($url, $crawledURLs) || in_array($url, $internalURLs)) {
+            message("      Excluding duplicate");
+            continue;
+        }
+
+
         // Exclude external URLs
         if (!isInternalUrl($url)) {
-            message("      Excluding external URL");
+            message("     Excluding external URL");
             continue;
         }
 
 
         // Exclude anchor links
         if (isAnchorLink($url)) {
-            message("      Excluding anchor link");
+            message("     Excluding anchor link");
             continue;
         }
 
 
         // Exclude blacklisted path
         if (isInBlacklistedPath($url)) {
-            message("      Excluding blacklisted path");
+            message("     Excluding blacklisted path");
             continue;
         }
+
+
+        // Add valid URL
+        $internalURLs[] = $url;
 
 
     }
