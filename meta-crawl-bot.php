@@ -12,11 +12,6 @@ if (isset($argv[1])) {
     $startingURL = formatUrl($startingURL);
 }
 
-$files = createFiles($startingURL);
-
-// Clear the CSV
-$csvFile = fopen($files['csvResults'], 'w');
-
 
 // Start output buffering
 ob_start();
@@ -32,6 +27,60 @@ $notFoundURLs = [];
 
 // Start the crawler with the starting URL
 crawlURL($startingURL);
+
+
+
+
+
+// After crawling, create the destination directory
+$files = setDestFiles($startingURL);
+createDestFolder($files['csvResults']);
+
+
+// Clear the CSV
+$csvFile = fopen($files['csvResults'], 'w');
+
+
+// After crawling, create headers based on collected meta information
+$headers = ['url'];
+$metaKeys = [];
+foreach ($allMetaInfo as $info) {
+    $metaKeys = array_merge($metaKeys, array_keys($info['meta']));
+}
+$metaKeys = array_unique($metaKeys);
+$headers = array_merge($headers, array_map(function($k) { return 'meta_' . $k; }, $metaKeys));
+$headers[] = 'title';
+
+// Write headers and data to CSV
+$csvFile = fopen($files['csvResults'], 'w');
+fputcsv($csvFile, $headers);
+foreach ($allMetaInfo as $info) {
+    $row = ['url' => $info['url']];
+    foreach ($metaKeys as $key) {
+        $row['meta_' . $key] = html_entity_decode($info['meta'][$key]) ?? '';
+    }
+    $row['title'] = $info['title'];
+    fputcsv($csvFile, $row);
+}
+message("Results saved to ".$files['csvResults']);
+fclose($csvFile);
+
+
+
+// After finishing the crawl, save the 404 URLs to a CSV file
+$csvFileNotFound = fopen($files['csv404'], 'w');
+foreach ($notFoundURLs as $notFoundUrl) {
+    fputcsv($csvFileNotFound, [$notFoundUrl]);
+}
+fclose($csvFileNotFound);
+
+
+// After finishing the crawl, save the external URLs to a CSV file
+$csvFileExternal = fopen($files['csvExternals'], 'w');
+foreach ($externalURLs as $externalUrl) {
+    fputcsv($csvFileExternal, [$externalUrl]);
+}
+fclose($csvFileExternal);
 
 
 
@@ -91,79 +140,58 @@ function crawlURL($url) {
 
 
 
-// After crawling, create headers based on collected meta information
-$headers = ['url'];
-$metaKeys = [];
-foreach ($allMetaInfo as $info) {
-    $metaKeys = array_merge($metaKeys, array_keys($info['meta']));
-}
-$metaKeys = array_unique($metaKeys);
-$headers = array_merge($headers, array_map(function($k) { return 'meta_' . $k; }, $metaKeys));
-$headers[] = 'title';
-
-// Write headers and data to CSV
-$csvFile = fopen($files['csvResults'], 'w');
-fputcsv($csvFile, $headers);
-foreach ($allMetaInfo as $info) {
-    $row = ['url' => $info['url']];
-    foreach ($metaKeys as $key) {
-        $row['meta_' . $key] = $info['meta'][$key] ?? '';
-    }
-    $row['title'] = $info['title'];
-    fputcsv($csvFile, $row);
-}
-fclose($csvFile);
-
-
-
-// After finishing the crawl, save the 404 URLs to a CSV file
-$csvFileNotFound = fopen($files['csv404'], 'w');
-foreach ($notFoundURLs as $notFoundUrl) {
-    fputcsv($csvFileNotFound, [$notFoundUrl]);
-}
-fclose($csvFileNotFound);
-
-
-// After finishing the crawl, save the external URLs to a CSV file
-$csvFileExternal = fopen($files['csvExternals'], 'w');
-foreach ($externalURLs as $externalUrl) {
-    fputcsv($csvFileExternal, [$externalUrl]);
-}
-fclose($csvFileExternal);
-
-
-
-
 function getContents($url) {
     global $notFoundURLs, $startingURL;
 
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false); // Don't follow redirects automatically
-    curl_setopt($ch, CURLOPT_HEADER, true);
-    curl_setopt($ch, CURLOPT_NOBODY, true);
-    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36');
-
-    curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-    if ($httpCode == 301 || $httpCode == 302) {
-        $redirectUrl = curl_getinfo($ch, CURLINFO_REDIRECT_URL);
-        $startingURL = $redirectUrl; // Update the starting URL
-        curl_close($ch);
-        return getContents($redirectUrl); // Recursively call the function with the new URL
+    if (!$url) {
+        message("URL is empty or not set.");
+        return false;
     }
 
-    if ($httpCode == 404) {
-        $notFoundURLs[] = $url; // Log the 404 URL
+    $curlOptions = [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HEADER => true, // Retrieve both headers and content
+        CURLOPT_SSL_VERIFYPEER => false, // Disable SSL verification
+        CURLOPT_SSL_VERIFYHOST => false, // Disable SSL host verification
+        CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.5359.108 Safari/537.36', // Set User-Agent to mimic a browser
+    ];
+
+    $curlHandle = curl_init();
+    curl_setopt_array($curlHandle, $curlOptions);
+
+    $response = curl_exec($curlHandle);
+
+    if (curl_error($curlHandle)) {
+        message('cURL error: ' . curl_error($curlHandle));
+    } else {
+        // Process the response, including headers and content
+        $headers = curl_getinfo($curlHandle, CURLINFO_HTTP_CODE);
+        $content = curl_getinfo($curlHandle, CURLINFO_CONTENT_TYPE);
+
+        // message("URL: $url");
+        // message("HTTP Code: $headers");
+        // message("Content Type: $content");
+        // message($response);
+
+        if ($headers == 301 || $headers == 302) {
+            $redirectUrl = curl_getinfo($curlHandle, CURLINFO_REDIRECT_URL);
+            $startingURL = $redirectUrl; // Update the starting URL
+            curl_close($curlHandle);
+            return getContents($redirectUrl); // Recursively call the function with the new URL
+        }
+
+        if ($headers == 404) {
+            $notFoundURLs[] = $url; // Log the 404 URL
+        }
+
+        // Close the cURL session
+        curl_close($curlHandle);
+
+        // Return the content of the URL
+        return $response;
     }
 
-    // Close the cURL session
-    curl_close($ch);
-
-    // Return the content of the URL
-    return file_get_contents($url);
 }
 
 
@@ -207,6 +235,7 @@ function message($msg) {
     ob_flush();
     flush();
 }
+
 
 
 function findUrls($hrefs) {
@@ -299,7 +328,6 @@ function normalizeUrl($href) {
 
 
 
-
 function isInBlacklistedPath($url) {
     global $excludedPaths;
 
@@ -309,7 +337,6 @@ function isInBlacklistedPath($url) {
         }
     }
 }
-
 
 
 
@@ -356,22 +383,28 @@ function sanitizeUrlForFolderName($url) {
 
 
 
-function createFiles($startingURL) {
+function setDestFiles($startingURL) {
 
     $files = [];
 
     // Create a new directory inside 'results' with the current date and time
     $dateFolder = 'results/' . sanitizeUrlForFolderName($startingURL) . '-' . date('Y_m_d-H_i_s');
-    if (!file_exists($dateFolder)) {
-        mkdir($dateFolder, 0777, true);
-    }
 
     // Define file paths with the new directory
-    $files['csvResults']  = $dateFolder . '/crawled_data.csv';
+    $files['csvResults']      = $dateFolder . '/crawled_data.csv';
     $files['csv404']          = $dateFolder . '/404_urls.csv';
     $files['csvExternals']    = $dateFolder . '/external_urls.csv';
 
     return $files;
+}
+
+
+
+function createDestFolder($fileName) {
+
+    if (!file_exists(dirname($fileName))) {
+        mkdir(dirname($fileName), 0777, true);
+    }
 }
 
 
