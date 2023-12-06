@@ -25,7 +25,10 @@ $excludedMetaKeys = ['viewport', 'twitter:card', 'generator'];
 
 
 // Stop after n calls
-$debugLimit = 99999;
+$debugLimit = 999;
+
+// Initialize a counter for debugging
+$debugCounter = 0;
 
 
 // Create a new directory inside 'results' with the current date and time
@@ -35,6 +38,6 @@ if (!file_exists($dateFolder)) {
 }
 
 // Define file paths with the new directory
-$csvResultsFileName  = $dateFolder . '/crawled_data.csv';
-$csvFileNotFoundName = $dateFolder . '/404_urls.csv';
-$csvFileExternalName = $dateFolder . '/external_urls.csv';
+$files['csvResults']  = $dateFolder . '/crawled_data.csv';
+$files['csv404']          = $dateFolder . '/404_urls.csv';
+$files['csvExternals']    = $dateFolder . '/external_urls.csv';

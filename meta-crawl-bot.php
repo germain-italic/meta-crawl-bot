@@ -2,12 +2,18 @@
 
 include('config.php');
 
-// Initialize a counter for debugging
-$debugCounter = 0;
 
+// Check if a command-line argument is provided
+if (isset($argv[1])) {
+    $startingURL = $argv[1]; // Use the provided URL
+} else {
+    // Fallback to the URL from config.php
+}
+
+$files = createFiles($startingURL);
 
 // Clear the CSV
-$csvFile = fopen($csvResultsFileName, 'w');
+$csvFile = fopen($files['csvResults'], 'w');
 
 
 // Start output buffering
@@ -94,7 +100,7 @@ $headers = array_merge($headers, array_map(function($k) { return 'meta_' . $k; }
 $headers[] = 'title';
 
 // Write headers and data to CSV
-$csvFile = fopen($csvResultsFileName, 'w');
+$csvFile = fopen($files['csvResults'], 'w');
 fputcsv($csvFile, $headers);
 foreach ($allMetaInfo as $info) {
     $row = ['url' => $info['url']];
@@ -109,7 +115,7 @@ fclose($csvFile);
 
 
 // After finishing the crawl, save the 404 URLs to a CSV file
-$csvFileNotFound = fopen($csvFileNotFoundName, 'w');
+$csvFileNotFound = fopen($files['csv404'], 'w');
 foreach ($notFoundURLs as $notFoundUrl) {
     fputcsv($csvFileNotFound, [$notFoundUrl]);
 }
@@ -117,7 +123,7 @@ fclose($csvFileNotFound);
 
 
 // After finishing the crawl, save the external URLs to a CSV file
-$csvFileExternal = fopen($csvExternamUrlsName, 'w');
+$csvFileExternal = fopen($files['csvExternals'], 'w');
 foreach ($externalURLs as $externalUrl) {
     fputcsv($csvFileExternal, [$externalUrl]);
 }
@@ -316,4 +322,24 @@ function sanitizeUrlForFolderName($url) {
     $sanitized = preg_replace('/[^a-zA-Z0-9\-]/', '_', $sanitized);
 
     return $sanitized;
+}
+
+
+
+function createFiles($startingURL) {
+
+    $files = [];
+
+    // Create a new directory inside 'results' with the current date and time
+    $dateFolder = 'results/' . sanitizeUrlForFolderName($startingURL) . '-' . date('Y_m_d-H_i_s');
+    if (!file_exists($dateFolder)) {
+        mkdir($dateFolder, 0777, true);
+    }
+
+    // Define file paths with the new directory
+    $files['csvResults']  = $dateFolder . '/crawled_data.csv';
+    $files['csv404']          = $dateFolder . '/404_urls.csv';
+    $files['csvExternals']    = $dateFolder . '/external_urls.csv';
+
+    return $files;
 }
