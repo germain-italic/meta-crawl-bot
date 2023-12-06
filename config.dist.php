@@ -27,5 +27,6 @@ $excludedMetaKeys = ['viewport', 'twitter:card', 'generator'];
 $debugLimit = 5;
 
 
-// Name of the CSV file to create
-$csvFileName = 'crawled_data.csv';
+// Name of the CSV files to create
+$csvFileName = 'crawled_data-'. date ('Y-m-d_H-i-s') . '.csv';
+$csvFileNotFoundName = '404_urls-'. date ('Y-m-d_H-i-s') . '.csv';

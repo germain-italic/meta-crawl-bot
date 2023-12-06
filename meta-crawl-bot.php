@@ -22,6 +22,10 @@ $crawledURLs = [];
 $allMetaInfo = [];
 
 
+// Initialize an array to store 404s
+$notFoundURLs = [];
+
+
 // Crawl the starting URL
 crawlURL($startingURL);
 
@@ -142,17 +146,37 @@ fclose($csvFile);
 
 
 
+// After finishing the crawl, save the 404 URLs to a CSV file
+$csvFileNotFound = fopen($csvFileNotFoundName, 'w');
+foreach ($notFoundURLs as $notFoundUrl) {
+    fputcsv($csvFileNotFound, [$notFoundUrl]);
+}
+fclose($csvFileNotFound);
+
+
+
 function getContents($url) {
+    global $notFoundURLs;
+
     $options = array(
         'http' => array(
             'method' => "GET",
             'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36\r\n"
         )
-        );
+    );
 
     $context = stream_context_create($options);
 
-    return file_get_contents($url, false, $context);
+    $content = @file_get_contents($url, false, $context);
+
+    if (isset($http_response_header)) {
+        $responseCode = explode(' ', $http_response_header[0])[1];
+        if ($responseCode == '404') {
+            $notFoundURLs[] = $url; // Log the 404 URL
+        }
+    }
+
+    return $content;
 }
 
 
