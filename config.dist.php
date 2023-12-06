@@ -28,5 +28,5 @@ $debugLimit = 5;
 
 
 // Name of the CSV files to create
-$csvFileName = 'crawled_data-'. date ('Y-m-d_H-i-s') . '.csv';
-$csvFileNotFoundName = '404_urls-'. date ('Y-m-d_H-i-s') . '.csv';
+$csvFileName = 'results/crawled_data-'. date ('Y-m-d_H-i-s') . '.csv';
+$csvFileNotFoundName = '404s/404_urls-'. date ('Y-m-d_H-i-s') . '.csv';

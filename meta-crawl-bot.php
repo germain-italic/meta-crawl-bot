@@ -78,27 +78,6 @@ function crawlURL($url) {
     $internalURLs = [];
     preg_match_all('/href="([^"]+)"/', $pageContent, $matches);
     $internalURLs = findUrls($matches[1]);
-    foreach ($matches[1] as $href) {
-
-
-        /*
-
-
-        // Check if the URL has already been crawled
-        if (in_array($fullUrl, $crawledURLs)) {
-            $isExcluded = true;
-            // message("        => Exclude $exPath");
-            continue;
-        }
-
-
-        // If not excluded add to internal URLs
-        if (!$isExcluded) {
-            message("=> Adding $fullUrl to the list");
-            $internalURLs[] = $fullUrl;
-        }
-        */
-    }
 
     // Crawl the extracted internal URLs
     foreach ($internalURLs as $internalURL) {

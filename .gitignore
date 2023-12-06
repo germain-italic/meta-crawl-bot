@@ -1,2 +1,3 @@
 config.php
-*.csv
+404s/*.csv
+results/*.csv
